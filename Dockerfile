@@ -40,13 +40,16 @@ ENV HF_HOME=/opt/cache/huggingface \
     WANDB_MODE=disabled \
     YOURMT3_HOME=/opt/yourmt3
 
-RUN mkdir -p /opt/cache/huggingface /opt/cache/torch /opt/yourmt3
+RUN mkdir -p /opt/cache/huggingface /opt/cache/torch /opt/cache/uv /opt/yourmt3 && \
+    fix-permissions /opt/cache
 
 # Default kernel: Demucs and `import spaces`, without moving torch or numpy.
+# UV_CACHE_DIR is explicit because XDG_CACHE_HOME points at /opt/cache, and
+# jovyan cannot initialize a cache there until fix-permissions has run.
 USER jovyan
-RUN uv pip freeze > /tmp/scipy-ml-constraints.txt && \
-    uv pip install --system --no-deps "demucs==4.0.1" && \
-    uv pip install --system \
+RUN UV_CACHE_DIR=/tmp/uv-cache uv pip freeze > /tmp/scipy-ml-constraints.txt && \
+    UV_CACHE_DIR=/tmp/uv-cache uv pip install --system --no-deps "demucs==4.0.1" && \
+    UV_CACHE_DIR=/tmp/uv-cache uv pip install --system \
         --constraint /tmp/scipy-ml-constraints.txt \
         "dora-search>=0.1.12" \
         "diffq>=0.2.1" \
@@ -60,8 +63,8 @@ RUN uv pip freeze > /tmp/scipy-ml-constraints.txt && \
         tqdm \
         treetable \
         spaces && \
-    uv cache clean && \
-    rm -f /tmp/scipy-ml-constraints.txt
+    UV_CACHE_DIR=/tmp/uv-cache uv cache clean && \
+    rm -rf /tmp/uv-cache /tmp/scipy-ml-constraints.txt
 
 USER root
 
