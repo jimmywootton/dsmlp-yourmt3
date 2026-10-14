@@ -47,8 +47,8 @@ RUN mkdir -p /opt/cache/huggingface /opt/cache/torch /opt/cache/uv /opt/yourmt3 
 # UV_CACHE_DIR is explicit because XDG_CACHE_HOME points at /opt/cache, and
 # jovyan cannot initialize a cache there until fix-permissions has run.
 USER jovyan
-RUN UV_CACHE_DIR=/tmp/uv-cache uv pip freeze > /tmp/scipy-ml-constraints.txt && \
-    UV_CACHE_DIR=/tmp/uv-cache uv pip install --system --no-deps "demucs==4.0.1" && \
+RUN python -c 'import importlib.metadata as m; open("/tmp/scipy-ml-constraints.txt","w").write("".join("%s==%s\n" % (d.metadata["Name"], d.version) for d in m.distributions()))'
+RUN UV_CACHE_DIR=/tmp/uv-cache uv pip install --system --no-deps "demucs==4.0.1" && \
     UV_CACHE_DIR=/tmp/uv-cache uv pip install --system \
         --constraint /tmp/scipy-ml-constraints.txt \
         "dora-search>=0.1.12" \
